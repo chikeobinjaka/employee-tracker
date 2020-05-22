@@ -16,6 +16,7 @@ create table role (
     id integer not null auto_increment,
     title varchar(30),
     salary decimal(10, 2),
+    isManager bool default false,
     department_id integer not null,
     primary key(id),
     index (department_id),
