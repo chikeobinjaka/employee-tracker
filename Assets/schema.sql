@@ -12,6 +12,8 @@ create table department(
     primary key(id)
 );
 
+create unique index department_name_idx on department(name);
+
 create table role (
     id integer not null auto_increment,
     title varchar(30),
@@ -22,6 +24,7 @@ create table role (
     index (department_id),
     foreign key(department_id) references department(id)
 );
+create unique index role_title_idx on role(title);
 
 create table employee(
     id integer not null auto_increment,

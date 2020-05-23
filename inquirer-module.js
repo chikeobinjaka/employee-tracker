@@ -1,18 +1,18 @@
 const utilities = require("./utilities");
 
-const TASK_CHOICES = [
-  "View All Employees",
-  "Add Employee",
-  "View All Employees by Department",
-  "View All Employees by Manager",
-  "Remove Employee",
-  "Update Employee Role",
-  "Update Employee Manager",
-  "View All Roles",
-  "Define New Role",
-  "Create Department",
-  "Exit Application",
-];
+// const TASK_CHOICES = [
+//   "View All Employees",
+//   "Add Employee",
+//   "View All Employees by Department",
+//   "View All Employees by Manager",
+//   "Remove Employee",
+//   "Update Employee Role",
+//   "Update Employee Manager",
+//   "View All Roles",
+//   "Define New Role",
+//   "Create Department",
+//   "Exit Application",
+// ];
 
 // const TASK_CHOICES_TEST = {
 //   ViewAllEmployees: { title: "View All Employees", funct: utilities.viewAllEmployees },
@@ -28,34 +28,34 @@ const TASK_CHOICES = [
 //   ExitApplication: { title: "Exit Application", funct: utilities.exitApplication },
 // };
 
-const TASK_CHOICES_FUNC = {
-  "View All Employees": utilities.viewAllEmployees,
-  "Add Employee": utilities.addEmployees,
-  "View All Employees by Department": utilities.viewEmployeeByDepartment,
-  "View All Employees by Manager": utilities.viewEmployeeByManager,
-  "Remove Employee": utilities.removeEmployee,
-  "Update Employee Role": utilities.updateEmployeeRole,
-  "Update Employee Manager": utilities.updateEmployeeManager,
-  "View All Roles": utilities.viewRoles,
-  "Define New Role": utilities.defineRole,
-  "Create Department": utilities.createDepartment,
-  "Exit Application": utilities.exitApplication,
-};
+// const TASK_CHOICES_FUNC = {
+//   "View All Employees": utilities.viewAllEmployees,
+//   "Add Employee": utilities.addEmployees,
+//   "View All Employees by Department": utilities.viewEmployeeByDepartment,
+//   "View All Employees by Manager": utilities.viewEmployeeByManager,
+//   "Remove Employee": utilities.removeEmployee,
+//   "Update Employee Role": utilities.updateEmployeeRole,
+//   "Update Employee Manager": utilities.updateEmployeeManager,
+//   "View All Roles": utilities.viewRoles,
+//   "Define New Role": utilities.defineRole,
+//   "Create Department": utilities.createDepartment,
+//   "Exit Application": utilities.exitApplication,
+// };
 
-const TASK_QUESTION = {
-  name: "task",
-  type: "rawlist",
-  message: "What Task would you like to perform?",
-  choices: Object.keys(TASK_CHOICES_FUNC),
-};
+// const TASK_QUESTION = {
+//   name: "task",
+//   type: "rawlist",
+//   message: "What Task would you like to perform?",
+//   choices: Object.keys(TASK_CHOICES_FUNC),
+// };
 
-const CREATE_DEPARTMENT_QUESTIONS = [
-  {
-    name: "name",
-    type: "input",
-    message: "What is the name of this NEW department? ",
-  },
-];
+// const CREATE_DEPARTMENT_QUESTIONS = [
+//   {
+//     name: "name",
+//     type: "input",
+//     message: "What is the name of this NEW department? ",
+//   },
+// ];
 
 module.exports = {
   TASK_CHOICES: TASK_CHOICES,

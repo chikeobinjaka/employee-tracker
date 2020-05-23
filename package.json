@@ -13,6 +13,7 @@
     "express": "^4.16.4",
     "inquirer": "^7.1.0",
     "mysql": "^2.18.1",
-    "read-each-line-sync": "^1.0.5"
+    "read-each-line-sync": "^1.0.5",
+    "readline-sync": "^1.4.10"
   }
 }
