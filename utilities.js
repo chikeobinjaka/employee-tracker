@@ -23,17 +23,20 @@ function viewAllEmployees(connection) {
           console.log(`  ${id}  ${fn}  ${ln}  ${rid}  ${mid}`);
         }
       }
-    }
+    } else console.log("\n\n***ERROR***\n" + err.sqlMessage + "\n");
+    readlineSync.question(`Press "Enter" to continue...`);
+    console.clear();
+    getTask(connection);
   });
 }
 function addEmployees(connection) {
   console.clear();
   console.log("Running addEmployees");
 }
-function viewEmployeeByDepartment(connection,department) {
+function viewEmployeeByDepartment(connection, department) {
   console.clear();
   console.log("Running viewEmployeeByDepartment");
-  if (department != null){
+  if (department != null) {
     let query = `select employee.first_name,employee.last_name from employee, department where employee`;
   }
 }
@@ -41,9 +44,12 @@ function viewEmployeeByManager(connection) {
   console.clear();
   console.log("Running viewEmployeeByManager");
 }
-function removeEmployee(connection) {
+function removeEmployee(connection, employeeId) {
   console.clear();
   console.log("Running removeEmployee");
+  // first check if there is an employee with the same manager id
+  let query = `select * from employee where manager_id = ${employeeId}`;
+
 }
 function updateEmployeeRole(connection) {
   console.clear();
@@ -53,9 +59,29 @@ function updateEmployeeManager(connection) {
   console.clear();
   console.log("Running updateEmployeeManager");
 }
-function viewRoles(connection) {
+function viewAllRoles(connection) {
   console.clear();
-  console.log("Running viewRoles");
+  console.log("Running viewAllRoles");
+  let query = "select * from role";
+  connection.query(query, function (err, res) {
+    if (!err) {
+      console.log(res);
+      console.log("\nDepartments:");
+      console.log("          Title               Salary     Manager?  Dept. ID");
+      console.log("=========================  ============  ========  ======== ");
+      for (let index = 0; index < res.length; index++) {
+        let title = ("" + res[index].title).padStart(25, " ");
+        let salary = ("" + res[index].salary).padStart(10, " ");
+        let isManager = "    No";
+        let deptId = ("" + res[index].department_id).padStart(6, " ");
+        if (res[index].isManager) isManager = "   Yes";
+        console.log(title, "  ", salary, "  ", isManager, "  ", deptId);
+      }
+    } else console.log("\n\n***ERROR***\n" + err.sqlMessage + "\n");
+    readlineSync.question(`Press "Enter" to continue...`);
+    console.clear();
+    getTask(connection);
+  });
 }
 function defineRole(connection) {
   console.clear();
@@ -68,7 +94,8 @@ function createDepartment(connection) {
     console.log(answer);
     // add new row to department table
     let departmentName = capitalizeFirstLetter(answer.name);
-    connection.query(`insert into department (name) value ("${departmentName}")`, function (err, res) {
+    let query = `insert into department (name) value ("${departmentName}")`;
+    connection.query(query, function (err, res) {
       if (!err) {
         console.log(`\nSuccessfully created department "${answer.name}"\n`);
         getTask(connection);
@@ -95,9 +122,9 @@ function capitalizeFirstLetter(inputString) {
   }
   return retval;
 }
-function viewDepartments(connection) {
+function viewAllDepartments(connection) {
   console.clear();
-  let query = "select * from department";
+  let query = "select * from department order by id";
   connection.query(query, function (err, res) {
     if (err) {
       console.log(err);
@@ -120,6 +147,7 @@ function viewDepartments(connection) {
 function exitApplication(connection) {
   console.clear();
   console.log("\nThank you for using Employee Tracker. Have a good day!!\n\n");
+  connection.end();
   process.exit(1);
 }
 
@@ -160,9 +188,9 @@ const TASK_CHOICES_FUNC = {
   "Remove Employee": removeEmployee,
   "Update Employee Role": updateEmployeeRole,
   "Update Employee Manager": updateEmployeeManager,
-  "View All Roles": viewRoles,
+  "View All Roles": viewAllRoles,
   "Define New Role": defineRole,
-  "View Departments": viewDepartments,
+  "View Departments": viewAllDepartments,
   "Create Department": createDepartment,
   "Exit Application": exitApplication,
 };
@@ -182,6 +210,14 @@ const CREATE_DEPARTMENT_QUESTIONS = [
   },
 ];
 
+const REMOVE_EMPLOYEE_QUESTION = [
+  {
+    name: "id",
+    type: "input",
+    message: "Enter the ID of the Employee you want to remove (fire!):",
+  },
+];
+
 // *********************
 
 module.exports = {
@@ -192,10 +228,10 @@ module.exports = {
   removeEmployee,
   updateEmployeeRole,
   updateEmployeeManager,
-  viewRoles,
+  viewAllRoles,
   defineRole,
   createDepartment,
-  viewDepartments,
+  viewAllDepartments,
   exitApplication,
   getTask,
   capitalizeFirstLetter,
