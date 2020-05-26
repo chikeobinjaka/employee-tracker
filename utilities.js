@@ -94,7 +94,7 @@ function addEmployees(connection) {
     let role = answer.role;
     let roleId = ROLES[role];
     let query = `insert into employee (first_name, last_name, role_id) values ("${fn}","${ln}",${roleId})`;
-    console.log(query);
+    //console.log(query);
     connection.query(query, function (err, res) {
       if (err) console.log("****ERROR****" + err.sqlMessage);
       else console.log(`SUCCESS!!! Employee ${ln}, ${fn} (${role}) added!!)`);
