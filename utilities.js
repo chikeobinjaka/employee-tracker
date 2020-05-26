@@ -1,7 +1,61 @@
 // const inqMod = require("./inquirer-module");
 const inquirer = require("inquirer");
-var util = require("util");
+const util = require("util");
 const readlineSync = require("readline-sync");
+const mysql = require("mysql");
+const constants = require("./constants");
+
+let ROLES = {};
+// https://codeburst.io/node-js-mysql-and-async-await-6fb25b01b628
+// function makeDb(config) {
+//   const connection = mysql.createConnection(config);
+//   return {
+//     query(sql, args) {
+//       return util.promisify(connection.query).call(connection, sql, args);
+//     },
+//     close() {
+//       return util.promisify(connection.end).call(connection);
+//     },
+//     beginTransaction() {
+//       return util.promisify(connection.beginTransaction).call(connection);
+//     },
+//     commit() {
+//       return util.promisify(connection.commit).call(connection);
+//     },
+//     rollback() {
+//       return util.promisify(connection.rollback).call(connection);
+//     },
+//   };
+// }
+/**
+
+// usage example:
+ * 
+ * const db = makeDb( config );
+ * try {
+ *  const someRows = await db.query( 'SELECT * FROM some_table' );
+ *  const otherRows = await db.query( 'SELECT * FROM other_table' );
+ *   // do something with someRows and otherRows
+ * } catch ( err ) {
+ *   // handle the error
+ * } finally {
+ *   await db.close();
+ * }
+ * 
+ * ******* TRANSACTION *******
+ * try {
+  await db.beginTransaction();
+  const someRows = await db.query( 'SELECT * FROM some_table' );
+  const otherRows = await db.query( 'SELECT * FROM other_table' );
+  // do something with someRows and otherRows
+  await db.commit();
+} catch ( err ) {
+  await db.rollback();
+  // handle the error
+} finally {
+  await db.close();
+}
+ */
 
 function viewAllEmployees(connection) {
   console.clear();
@@ -29,9 +83,26 @@ function viewAllEmployees(connection) {
     getTask(connection);
   });
 }
+
 function addEmployees(connection) {
   console.clear();
+  loadRoles(connection);
   console.log("Running addEmployees");
+  inquirer.prompt(ADD_EMPLOYEE_QUESTIONS).then(function (answer) {
+    let fn = capitalizeFirstLetter(answer.firstName);
+    let ln = capitalizeFirstLetter(answer.lastName);
+    let role = answer.role;
+    let roleId = ROLES[role];
+    let query = `insert into employee (first_name, last_name, role_id) values ("${fn}","${ln}",${roleId})`;
+    console.log(query);
+    connection.query(query, function (err, res) {
+      if (err) console.log("****ERROR****" + err.sqlMessage);
+      else console.log(`SUCCESS!!! Employee ${ln}, ${fn} (${role}) added!!)`);
+      readlineSync.question(`Press "Enter" to continue...`);
+      console.clear();
+      getTask(connection);
+    });
+  });
 }
 function viewEmployeeByDepartment(connection, department) {
   console.clear();
@@ -44,21 +115,57 @@ function viewEmployeeByManager(connection) {
   console.clear();
   console.log("Running viewEmployeeByManager");
 }
-function removeEmployee(connection, employeeId) {
-  console.clear();
-  console.log("Running removeEmployee");
-  // first check if there is an employee with the same manager id
-  let query = `select * from employee where manager_id = ${employeeId}`;
 
+function removeEmployee(connection) {
+  console.clear();
+  // console.log("Running removeEmployee");
+  // get the ID of the employee you want to remove
+  inquirer.prompt(constants.REMOVE_EMPLOYEE_QUESTION).then(function (answer) {
+    // first check if there is an employee with the same manager id
+
+    let query = `select * from employee where manager_id = ${answer.id}`;
+    connection.query(query, function (err, res) {
+      // console.log(res);
+      if (res.length != 0) {
+        console.error(`\n\n***ERROR*** Must first re-assign those managed by this employee:`);
+        console.log("Emp ID     First Name       Last Name");
+        console.log("======  ===============  ===============");
+        for (let index = 0; index < res.length; index++) {
+          // list the employees that have this employee as manager
+          let id = ("" + res[index].id).padStart(6, " ");
+          let fn = ("" + res[index].first_name).padStart(15, " ");
+          let ln = ("" + res[index].last_name).padStart(15, " ");
+          console.log(`${id}  ${fn}  ${ln}`);
+        }
+        console.log("\n");
+        readlineSync.question(`Press "Enter" to continue...`);
+        console.clear();
+        getTask(connection);
+      } else {
+        query = `delete from employee where id = ${answer.id}`;
+        connection.query(query, function (err, res) {
+          if (err) console.error(`\n\n***ERROR*** \n${err.sqlMessage}`);
+          else console.log(`Employee with ID = ${answer.id} successfully removed.`);
+
+          readlineSync.question(`Press "Enter" to continue...`);
+          console.clear();
+          getTask(connection);
+        });
+      }
+    });
+  });
 }
+
 function updateEmployeeRole(connection) {
   console.clear();
   console.log("Running updateEmployeeRole");
 }
+
 function updateEmployeeManager(connection) {
   console.clear();
   console.log("Running updateEmployeeManager");
 }
+
 function viewAllRoles(connection) {
   console.clear();
   console.log("Running viewAllRoles");
@@ -90,7 +197,7 @@ function defineRole(connection) {
 
 function createDepartment(connection) {
   console.log("Running createDepartment");
-  inquirer.prompt(CREATE_DEPARTMENT_QUESTIONS).then(function (answer) {
+  inquirer.prompt(constants.CREATE_DEPARTMENT_QUESTIONS).then(function (answer) {
     console.log(answer);
     // add new row to department table
     let departmentName = capitalizeFirstLetter(answer.name);
@@ -122,6 +229,7 @@ function capitalizeFirstLetter(inputString) {
   }
   return retval;
 }
+
 function viewAllDepartments(connection) {
   console.clear();
   let query = "select * from department order by id";
@@ -165,21 +273,6 @@ function getTask(connection) {
   });
 }
 
-// From inquirer-module.js
-const TASK_CHOICES = [
-  "View All Employees",
-  "Add Employee",
-  "View All Employees by Department",
-  "View All Employees by Manager",
-  "Remove Employee",
-  "Update Employee Role",
-  "Update Employee Manager",
-  "View All Roles",
-  "Define New Role",
-  "Create Department",
-  "Exit Application",
-];
-
 const TASK_CHOICES_FUNC = {
   "View All Employees": viewAllEmployees,
   "Add Employee": addEmployees,
@@ -202,21 +295,54 @@ const TASK_QUESTION = {
   choices: Object.keys(TASK_CHOICES_FUNC),
 };
 
-const CREATE_DEPARTMENT_QUESTIONS = [
+const ADD_EMPLOYEE_QUESTIONS = [
   {
-    name: "name",
+    name: "firstName",
     type: "input",
-    message: "What is the name of this NEW department? ",
+    message: "Enter Employee First Name: ",
+    validate: notBlank,
+  },
+  {
+    name: "lastName",
+    type: "input",
+    message: "Enter Employee Last Name: ",
+    validate: notBlank,
+  },
+  {
+    name: "role",
+    type: "list",
+    message: "Choose the Employee Role:",
+    choices: function getRoles() {
+      return Object.keys(ROLES);
+    },
   },
 ];
 
-const REMOVE_EMPLOYEE_QUESTION = [
-  {
-    name: "id",
-    type: "input",
-    message: "Enter the ID of the Employee you want to remove (fire!):",
-  },
-];
+function notBlank(name) {
+  if (name === null || name.trim().length === 0) {
+    return "**ERROR*** Input required";
+  } else return true;
+}
+
+/**
+ * Returns an object of Role Names and IDs
+ * @param {*} connection
+ */
+function loadRoles(connection) {
+  let retval = {};
+  let query = `select * from role order by id`;
+  connection.query(query, function (err, response) {
+    if (!err) {
+      //console.log(response);
+      for (let index = 0; index < response.length; index++) {
+        let title = response[index].title;
+        let id = response[index].id;
+        ROLES[title] = id;
+      }
+    }
+  });
+  return retval;
+}
 
 // *********************
 
