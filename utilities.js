@@ -6,6 +6,9 @@ const mysql = require("mysql");
 const constants = require("./constants");
 
 let ROLES = {};
+let DEPARTMENTS = {};
+let MANAGERS = {};
+let EMPLOYEES = {};
 // https://codeburst.io/node-js-mysql-and-async-await-6fb25b01b628
 // function makeDb(config) {
 //   const connection = mysql.createConnection(config);
@@ -86,7 +89,7 @@ function viewAllEmployees(connection) {
 
 function addEmployees(connection) {
   console.clear();
-  loadRoles(connection);
+  //loadRoles(connection);
   console.log("Running addEmployees");
   inquirer.prompt(ADD_EMPLOYEE_QUESTIONS).then(function (answer) {
     let fn = capitalizeFirstLetter(answer.firstName);
@@ -104,16 +107,63 @@ function addEmployees(connection) {
     });
   });
 }
-function viewEmployeeByDepartment(connection, department) {
+function viewEmployeeByDepartment(connection) {
   console.clear();
+  //console.log(DEPARTMENTS);
+  //loadDepartments(connection);
   console.log("Running viewEmployeeByDepartment");
-  if (department != null) {
-    let query = `select employee.first_name,employee.last_name from employee, department where employee`;
-  }
+  inquirer.prompt(EMPLOYEE_BY_DEPARTMENT_QUESTION).then(function (answer) {
+    let id = DEPARTMENTS[answer.name];
+    let query = `SELECT employee.id as id, employee.first_name as fn, employee.last_name as ln, role.title as title FROM employee, role, 
+    department where employee.role_id = role.id and role.department_id = department.id and department.id = ${id}`;
+    connection.query(query, function (err, res) {
+      if (!err) {
+        console.log(`******** Employees By Department (${answer.name}) ********`);
+        console.log("Emp ID     First Name       Last Name        Title");
+        console.log("======  ===============  ===============  ============");
+        for (let index = 0; index < res.length; index++) {
+          // list the employees that have this employee as manager
+          let id = ("" + res[index].id).padStart(6, " ");
+          let fn = ("" + res[index].fn).padStart(15, " ");
+          let ln = ("" + res[index].ln).padStart(15, " ");
+          let title = ("" + res[index].title).padStart(12, " ");
+          console.log(`${id}  ${fn}  ${ln}  ${title}`);
+        }
+      } else console.error("\n****ERROR****" + err.sqlMessage);
+      console.log("\n");
+      readlineSync.question(`Press "Enter" to continue...`);
+      console.clear();
+      getTask(connection);
+    });
+  });
 }
+
 function viewEmployeeByManager(connection) {
   console.clear();
   console.log("Running viewEmployeeByManager");
+  //console.log(MANAGERS);
+  inquirer.prompt(EMPLOYEE_BY_MANAGER_QUESTION).then(function (answer) {
+    let id = MANAGERS[answer.name];
+    let query = `select * from employee where manager_id = ${id}`;
+    connection.query(query, function (err, res) {
+      if (!err) {
+        console.log(`******** Employees By Manager (${answer.name}) ********`);
+        console.log("Emp ID     First Name       Last Name     ");
+        console.log("======  ===============  ===============  ");
+        for (let index = 0; index < res.length; index++) {
+          // list the employees that have this employee as manager
+          let id = ("" + res[index].id).padStart(6, " ");
+          let fn = ("" + res[index].first_name).padStart(15, " ");
+          let ln = ("" + res[index].last_name).padStart(15, " ");
+          console.log(`${id}  ${fn}  ${ln}`);
+        }
+      } else console.error("\n****ERROR****" + err.sqlMessage);
+      console.log("\n");
+      readlineSync.question(`Press "Enter" to continue...`);
+      console.clear();
+      getTask(connection);
+    });
+  });
 }
 
 function removeEmployee(connection) {
@@ -156,15 +206,19 @@ function removeEmployee(connection) {
   });
 }
 
+// ****** WIP
 function updateEmployeeRole(connection) {
   console.clear();
   console.log("Running updateEmployeeRole");
+  console.log(EMPLOYEES);
+  console.log(ROLES);
 }
 
 function updateEmployeeManager(connection) {
   console.clear();
   console.log("Running updateEmployeeManager");
 }
+// **********
 
 function viewAllRoles(connection) {
   console.clear();
@@ -318,6 +372,66 @@ const ADD_EMPLOYEE_QUESTIONS = [
   },
 ];
 
+const EMPLOYEE_BY_DEPARTMENT_QUESTION = [
+  {
+    name: "name",
+    type: "list",
+    message: "Choose Department: ",
+    choices: function getDepartments() {
+      return Object.keys(DEPARTMENTS);
+    },
+  },
+];
+
+const EMPLOYEE_BY_MANAGER_QUESTION = [
+  {
+    name: "name",
+    type: "list",
+    message: "Choose Manager: ",
+    choices: function getManagers() {
+      return Object.keys(MANAGERS);
+    },
+  },
+];
+
+const UPDATE_EMPLOYEE_ROLE_QUESTIONS = [
+  {
+    name: "employee",
+    type: "list",
+    message: "Choose Employee to Update: ",
+    choices: function getEmployees() {
+      return Object.keys(EMPLOYEES);
+    },
+  },
+  {
+    name: "role",
+    type: "list",
+    message: "Choose role for Employee: ",
+    choices: function getRoles() {
+      return Object.keys(ROLES);
+    },
+  },
+];
+
+const UPDATE_EMPLOYEE_MANAGER_QUESTIONS = [
+  {
+    name: "employee",
+    type: "list",
+    message: "Choose Employee to Update: ",
+    choices: function getEmployees() {
+      return Object.keys(EMPLOYEES);
+    },
+  },
+  {
+    name: "manager",
+    type: "list",
+    message: "Choose Manager for Employee: ",
+    choices: function getRoles() {
+      return Object.keys(MANAGERS);
+    },
+  },
+];
+
 function notBlank(name) {
   if (name === null || name.trim().length === 0) {
     return "**ERROR*** Input required";
@@ -344,7 +458,54 @@ function loadRoles(connection) {
   return retval;
 }
 
+function loadDepartments(connection) {
+  let retval = {};
+  let query = `select * from department order by id`;
+  connection.query(query, function (err, response) {
+    if (!err) {
+      // console.log(response);
+      for (let index = 0; index < response.length; index++) {
+        let name = response[index].name;
+        let id = response[index].id;
+        DEPARTMENTS[name] = id;
+      }
+    }
+  });
+  return retval;
+}
+
+function loadManagers(connection) {
+  let retval = {};
+  let query = `select * from employee where id in (select manager_id from employee  where manager_id is not null group by manager_id)`;
+  connection.query(query, function (err, response) {
+    if (!err) {
+      // console.log(response);
+      for (let index = 0; index < response.length; index++) {
+        let name = response[index].first_name + " " + response[index].last_name;
+        let id = response[index].id;
+        MANAGERS[name] = id;
+      }
+    }
+  });
+  return retval;
+}
 // *********************
+
+function loadEmployees(connection) {
+  let retval = {};
+  let query = `select * from employee `;
+  connection.query(query, function (err, response) {
+    if (!err) {
+      // console.log(response);
+      for (let index = 0; index < response.length; index++) {
+        let name = response[index].first_name + " " + response[index].last_name;
+        let id = response[index].id;
+        EMPLOYEES[name] = id;
+      }
+    }
+  });
+  return retval;
+}
 
 module.exports = {
   viewAllEmployees,
@@ -362,4 +523,12 @@ module.exports = {
   getTask,
   capitalizeFirstLetter,
   TASK_CHOICES_FUNC,
+  DEPARTMENTS,
+  ROLES,
+  MANAGERS,
+  EMPLOYEES,
+  loadDepartments,
+  loadRoles,
+  loadManagers,
+  loadEmployees,
 };
