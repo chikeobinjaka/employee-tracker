@@ -212,11 +212,19 @@ function updateEmployeeRole(connection) {
   console.log("Running updateEmployeeRole");
   console.log(EMPLOYEES);
   console.log(ROLES);
+  readlineSync.question(`Press "Enter" to continue...`);
+  console.clear();
+  getTask(connection);
 }
 
 function updateEmployeeManager(connection) {
   console.clear();
   console.log("Running updateEmployeeManager");
+  console.log(EMPLOYEES);
+  console.log(MANAGERS);
+  readlineSync.question(`Press "Enter" to continue...`);
+  console.clear();
+  getTask(connection);
 }
 // **********
 
@@ -226,7 +234,7 @@ function viewAllRoles(connection) {
   let query = "select * from role";
   connection.query(query, function (err, res) {
     if (!err) {
-      console.log(res);
+      // console.log(res);
       console.log("\nDepartments:");
       console.log("          Title               Salary     Manager?  Dept. ID");
       console.log("=========================  ============  ========  ======== ");
@@ -244,15 +252,63 @@ function viewAllRoles(connection) {
     getTask(connection);
   });
 }
+
 function defineRole(connection) {
   console.clear();
   console.log("Running defineRole");
+  inquirer.prompt(DEFINE_ROLE_QUESTIONS).then(function (answer) {
+    let roleName = capitalizeFirstLetter(answer.title);
+    let salary = answer.salary;
+    let isManager = false;
+    if (answer.isManager === "Yes") isManager = true;
+    let departmentId = DEPARTMENTS[answer.department];
+
+    if (roleName === null || roleName.length == 0) {
+      console.log(`\n\n***ERROR***\n"${roleName}" is an invalid Role name\n`);
+      readlineSync.question(`Press "Enter" to continue...`);
+      console.clear();
+      getTask(connection);
+    } else if (isNaN(salary)) {
+      console.log(`\n\n***ERROR***\n"${salary}" is an invalid number\n`);
+      readlineSync.question(`Press "Enter" to continue...`);
+      console.clear();
+      getTask(connection);
+    } else {
+      // check if the role already exists in the database
+      let query = `select * from role where title = "${roleName}"`;
+      connection.query(query, function (err, res) {
+        if (res.length != 0) {
+          console.log(`\n\n***ERROR***\n"${roleName}" is already defined\n`);
+          readlineSync.question(`Press "Enter" to continue...`);
+          console.clear();
+          getTask(connection);
+        } else {
+          query = `insert into role (title, salary, isManager, department_id) values ("${roleName}", ${salary}, ${isManager}, ${departmentId})`;
+          // console.log(query);
+          connection.query(query, function (err, res) {
+            if (err) {
+              console.log("\n\n***ERROR*** Unable to create new Role:\n" + err.sqlMessage + "\n");
+              readlineSync.question(`Press "Enter" to continue...`);
+              console.clear();
+              getTask(connection);
+            } else {
+              console.log(`\n\nSuccessfully create new Role "${roleName}"\n`);
+              readlineSync.question(`Press "Enter" to continue...`);
+              console.clear();
+              getTask(connection);
+            }
+          });
+        }
+      });
+    }
+  });
 }
 
 function createDepartment(connection) {
+  console.clear();
   console.log("Running createDepartment");
   inquirer.prompt(constants.CREATE_DEPARTMENT_QUESTIONS).then(function (answer) {
-    console.log(answer);
+    //console.log(answer);
     // add new row to department table
     let departmentName = capitalizeFirstLetter(answer.name);
     let query = `insert into department (name) value ("${departmentName}")`;
@@ -292,7 +348,7 @@ function viewAllDepartments(connection) {
       console.log(err);
       getTask(connection);
     }
-    console.log(res);
+    // console.log(res);
     console.log("\nDepartments:");
     console.log("  Dept. ID       Department Name");
     console.log("============     ===============");
@@ -428,6 +484,34 @@ const UPDATE_EMPLOYEE_MANAGER_QUESTIONS = [
     message: "Choose Manager for Employee: ",
     choices: function getRoles() {
       return Object.keys(MANAGERS);
+    },
+  },
+];
+
+const DEFINE_ROLE_QUESTIONS = [
+  {
+    name: "title",
+    type: "input",
+    message: "What is the title for this role? ",
+  },
+  {
+    name: "salary",
+    type: "input",
+    message: "What is the salary for this role? ",
+  },
+  {
+    name: "isManager",
+    type: "list",
+    message: "Is this a Management Role? ",
+    choices: ["No", "Yes"],
+    default: "No",
+  },
+  {
+    name: "department",
+    type: "list",
+    message: "Select the Department for this Role: ",
+    choices: function getDepartments() {
+      return Object.keys(DEPARTMENTS);
     },
   },
 ];

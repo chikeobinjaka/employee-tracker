@@ -44,6 +44,7 @@ const REMOVE_EMPLOYEE_QUESTION = [
   },
 ];
 
+
 module.exports = {
   DB_CONFIG,
   CREATE_DEPARTMENT_QUESTIONS,
