@@ -101,12 +101,15 @@ function addEmployees(connection) {
     connection.query(query, function (err, res) {
       if (err) console.log("****ERROR****" + err.sqlMessage);
       else console.log(`SUCCESS!!! Employee ${ln}, ${fn} (${role}) added!!)`);
+      loadEmployees();
+      loadManagers();
       readlineSync.question(`Press "Enter" to continue...`);
       console.clear();
       getTask(connection);
     });
   });
 }
+
 function viewEmployeeByDepartment(connection) {
   console.clear();
   //console.log(DEPARTMENTS);
@@ -206,15 +209,25 @@ function removeEmployee(connection) {
   });
 }
 
-// ****** WIP
 function updateEmployeeRole(connection) {
   console.clear();
   console.log("Running updateEmployeeRole");
-  console.log(EMPLOYEES);
-  console.log(ROLES);
-  readlineSync.question(`Press "Enter" to continue...`);
-  console.clear();
-  getTask(connection);
+  UPDATE_EMPLOYEE_ROLE_QUESTIONS;
+  inquirer.prompt(UPDATE_EMPLOYEE_ROLE_QUESTIONS).then(function (answer) {
+    let employeeId = EMPLOYEES[answer.employee];
+    let roleId = ROLES[answer.role];
+    let query = `update employee set role_id = ${roleId} where id = ${employeeId}`;
+    connection.query(query, function (err, res) {
+      if (err) {
+        console.log(`\n\n****ERROR**** Unable to update role of "${answer.employee}" to "${answer.role}"`);
+      } else {
+        console.log(`\n\nSuccessfully updated role of "${answer.employee}" to "${answer.role}"`);
+      }
+      readlineSync.question(`Press "Enter" to continue...`);
+      console.clear();
+      getTask(connection);
+    });
+  });
 }
 
 function updateEmployeeManager(connection) {
@@ -295,6 +308,7 @@ function defineRole(connection) {
               console.log(`\n\nSuccessfully create new Role "${roleName}"\n`);
               readlineSync.question(`Press "Enter" to continue...`);
               console.clear();
+              loadRoles();
               getTask(connection);
             }
           });
@@ -315,6 +329,7 @@ function createDepartment(connection) {
     connection.query(query, function (err, res) {
       if (!err) {
         console.log(`\nSuccessfully created department "${answer.name}"\n`);
+        loadDepartments();
         getTask(connection);
       } else {
         console.log("\n\n***ERROR***\n" + err.sqlMessage + "\n");
@@ -450,25 +465,6 @@ const EMPLOYEE_BY_MANAGER_QUESTION = [
   },
 ];
 
-const UPDATE_EMPLOYEE_ROLE_QUESTIONS = [
-  {
-    name: "employee",
-    type: "list",
-    message: "Choose Employee to Update: ",
-    choices: function getEmployees() {
-      return Object.keys(EMPLOYEES);
-    },
-  },
-  {
-    name: "role",
-    type: "list",
-    message: "Choose role for Employee: ",
-    choices: function getRoles() {
-      return Object.keys(ROLES);
-    },
-  },
-];
-
 const UPDATE_EMPLOYEE_MANAGER_QUESTIONS = [
   {
     name: "employee",
@@ -514,6 +510,40 @@ const DEFINE_ROLE_QUESTIONS = [
       return Object.keys(DEPARTMENTS);
     },
   },
+];
+
+const UPDATE_EMPLOYEE_ROLE_QUESTIONS = [
+  {
+    name: "employee",
+    type: "list",
+    message: "Select Employee to update: ",
+    choices: function getEmployees() {
+      return Object.keys(EMPLOYEES);
+    },
+  },
+  {
+    name: "role",
+    type: "list",
+    message: "Select Role: ",
+    choices: function getRoles() {
+      return Object.keys(ROLES);
+    },
+  },
+  // {
+  //   name: "",
+  //   type: "",
+  //   message: "",
+  // },
+  // {
+  //   name: "",
+  //   type: "",
+  //   message: "",
+  // },
+  // {
+  //   name: "",
+  //   type: "",
+  //   message: "",
+  // },
 ];
 
 function notBlank(name) {
