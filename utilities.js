@@ -212,7 +212,6 @@ function removeEmployee(connection) {
 function updateEmployeeRole(connection) {
   console.clear();
   console.log("Running updateEmployeeRole");
-  UPDATE_EMPLOYEE_ROLE_QUESTIONS;
   inquirer.prompt(UPDATE_EMPLOYEE_ROLE_QUESTIONS).then(function (answer) {
     let employeeId = EMPLOYEES[answer.employee];
     let roleId = ROLES[answer.role];
@@ -232,12 +231,23 @@ function updateEmployeeRole(connection) {
 
 function updateEmployeeManager(connection) {
   console.clear();
-  console.log("Running updateEmployeeManager");
-  console.log(EMPLOYEES);
-  console.log(MANAGERS);
-  readlineSync.question(`Press "Enter" to continue...`);
-  console.clear();
-  getTask(connection);
+  console.log("Running updateEmployeeRole");
+  inquirer.prompt(UPDATE_EMPLOYEE_MANAGER_QUESTIONS).then(function (answer) {
+    let employeeId = EMPLOYEES[answer.employee];
+    let managerId = EMPLOYEES[answer.manager];
+    if (employeeId === managerId) managerId = null;
+    let query = `update employee set manager_id = ${managerId} where id = ${employeeId}`;
+    connection.query(query, function (err, res) {
+      if (err) {
+        console.log(`\n\n****ERROR**** Unable to update manager of "${answer.employee}" to "${answer.manager}"`);
+      } else {
+        console.log(`\n\nSuccessfully updated role of "${answer.employee}" to "${answer.manager}"`);
+      }
+      readlineSync.question(`Press "Enter" to continue...`);
+      console.clear();
+      getTask(connection);
+    });
+  });
 }
 // **********
 
@@ -477,9 +487,9 @@ const UPDATE_EMPLOYEE_MANAGER_QUESTIONS = [
   {
     name: "manager",
     type: "list",
-    message: "Choose Manager for Employee: ",
+    message: "Choose Manager for Employee (Choose self for no Manager): ",
     choices: function getRoles() {
-      return Object.keys(MANAGERS);
+      return Object.keys(EMPLOYEES);
     },
   },
 ];
