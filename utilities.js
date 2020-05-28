@@ -72,15 +72,6 @@ function viewAllEmployees(connection) {
       console.log("  Emp. ID     First Name        Last Name            Role          Department");
       console.log("  =======  ===============  =============== ====================  ============");
       if (result.length != 0) {
-        // for (let index = 0; index < result.length; index++) {
-        //   res = result[index];
-        //   let id = ("" + res.id).padStart(7, " ");
-        //   let fn = ("" + res.first_name).padStart(15, " ");
-        //   let ln = ("" + res.last_name).padStart(15, " ");
-        //   let rid = ("" + res.role_id).padStart(10, " ");
-        //   let mid = ("" + res.manager_id).padStart(10, " ");
-        //   console.log(`  ${id}  ${fn}  ${ln}  ${rid}  ${mid}`);
-        // }
         for (let index = 0; index < result.length; index++) {
           let res = result[index];
           let id = ("" + res.id).padStart(7, " ");
