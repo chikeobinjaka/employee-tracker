@@ -64,20 +64,31 @@ function viewAllEmployees(connection) {
   console.clear();
   console.log("Running viewAllEmployees");
   let query = `select * from employee`;
+  query = `select employee.id as id, employee.first_name as fn, employee.last_name as ln, role.title as title,
+   department.name as department from employee, role, department where employee.role_id = role.id and 
+   role.department_id = department.id order by employee.id`;
   connection.query(query, function (err, result) {
     if (!err) {
-      console.log("\nDepartments:");
-      console.log("  Emp. ID     First Name        Last Name      Role       Manager");
-      console.log("  =======  ===============  =============== ==========  ==========");
+      console.log("  Emp. ID     First Name        Last Name            Role          Department");
+      console.log("  =======  ===============  =============== ====================  ============");
       if (result.length != 0) {
+        // for (let index = 0; index < result.length; index++) {
+        //   res = result[index];
+        //   let id = ("" + res.id).padStart(7, " ");
+        //   let fn = ("" + res.first_name).padStart(15, " ");
+        //   let ln = ("" + res.last_name).padStart(15, " ");
+        //   let rid = ("" + res.role_id).padStart(10, " ");
+        //   let mid = ("" + res.manager_id).padStart(10, " ");
+        //   console.log(`  ${id}  ${fn}  ${ln}  ${rid}  ${mid}`);
+        // }
         for (let index = 0; index < result.length; index++) {
-          res = result[index];
+          let res = result[index];
           let id = ("" + res.id).padStart(7, " ");
-          let fn = ("" + res.first_name).padStart(15, " ");
-          let ln = ("" + res.last_name).padStart(15, " ");
-          let rid = ("" + res.role_id).padStart(10, " ");
-          let mid = ("" + res.manager_id).padStart(10, " ");
-          console.log(`  ${id}  ${fn}  ${ln}  ${rid}  ${mid}`);
+          let fn = ("" + res.fn).padStart(15, " ");
+          let ln = ("" + res.ln).padStart(15, " ");
+          let title = ("" + res.title).padStart(20, " ");
+          let department = ("" + res.department).padStart(12, " ");
+          console.log(`  ${id}  ${fn}  ${ln}  ${title}  ${department}`);
         }
       }
     } else console.log("\n\n***ERROR***\n" + err.sqlMessage + "\n");
